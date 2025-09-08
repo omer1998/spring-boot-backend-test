@@ -3,13 +3,7 @@ package com.spring_test.demo.api.controller
 import com.spring_test.demo.api.dto.ContactBody
 import com.spring_test.demo.model.Contact
 import com.spring_test.demo.repository.ContactRepository
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
-import kotlin.coroutines.Continuation
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/contacts")
@@ -20,34 +14,58 @@ class ContactController(
     @PostMapping
     fun saveContact(
         @RequestBody body: ContactBody
-    ): ContactResponse{
+    ): ContactResponse {
         try {
             contactRepository.save<Contact>(
                 Contact(
-                    contactName = body.contactName,
-                    phoneNumber = body.contactNumber
+                    contactName = body.contactName, phoneNumber = body.contactNumber
                 )
             )
             return ContactResponse(
                 message = "contact added successfully"
             )
-        }catch (e:Exception){
+        } catch (e: Exception) {
             return ContactResponse(
                 message = "error adding contact ${e.message}"
             )
         }
     }
 
+    @DeleteMapping("/{phone}")
+    fun deleteByNumber(@PathVariable phone: String): ContactResponse {
+        try {
+            contactRepository.deleteByPhoneNumber(phone)
+            return ContactResponse(
+                message = "contact deleted successfully"
+            )
+        } catch (e: Exception) {
+            return ContactResponse(
+                message = "Error deleting contact ${e.message}"
+            )
+        }
+    }
+
     @GetMapping
-    fun hello(): ContactResponse{
-        return ContactResponse(
-            message = "hello from the other side"
-        )
+    fun getAllContacts(): ContactListResponse {
+        return ContactListResponse(
+            contacts = contactRepository.findAll().mapNotNull {
+                ContactDetail(
+                    name = it.contactName, phone = it.phoneNumber, imgUrl = it.imageUrl
+                )
+            })
     }
 
 
     data class ContactResponse(
         val message: String,
+    )
+
+    data class ContactListResponse(
+        val contacts: List<ContactDetail>
+    )
+
+    data class ContactDetail(
+        val name: String, val phone: String, val imgUrl: String
     )
 
 //    @GetMapping
